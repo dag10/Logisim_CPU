@@ -5,4 +5,4 @@ The CPU's design is inspired by Donn Stewart, http://cpuville.com.
 
 ## Compiler
 
-The **DrewCode** compiler, written in Flash, can also compile to a Windows binary, which is actually an emulator for the CPU compiled for Windows. You can access it at http://compiler.drewgottlieb.net.
+The *DrewCode* compiler, written in Flash, can also compile to a Windows binary, which is actually an emulator for the CPU compiled for Windows. You can access it at http://compiler.drewgottlieb.net.
