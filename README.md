@@ -32,3 +32,8 @@ To use run the [Brainf*ck](https://en.wikipedia.org/wiki/Brainfuck) interpreter,
 You'll see a welcome message appear on the screen labeled **ASCII Terminal Output**. If you don't see it, scroll right.
 Once you see the `bf> ` prompt, type some Brainf*ck code and hit enter. If your code consumes input, you can type it at
 this time.
+
+## Virtual Machine
+
+In 2015 as an exercise in learning Swift, I created a virtual machine. View the full readme [in the VM directory](VM).
+
