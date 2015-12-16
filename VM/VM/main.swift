@@ -69,11 +69,11 @@ do {
     
     cpu.registerInputHandler({
         return UInt16(getchar() & 0xFFFF)
-    }, forAddress: 0xFFFF)
+    }, forAddress: 0x0FFF)
     
     cpu.registerOutputHandler({ word in
         print(UnicodeScalar(word), terminator: "")
-    }, forAddress: 0xFFFF)
+    }, forAddress: 0x0FFF)
     
     try cpu.execute() { cpu in
         //print(cpu) // Uncomment this to print debugging info for every CPU cycle.

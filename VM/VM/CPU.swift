@@ -75,11 +75,11 @@ class CPU: CustomStringConvertible {
     var accumulator: UInt16 = 0
     var carryFlag: Bool = false
     
-    func registerInputHandler(handler: InputClosure, forAddress address: UInt16) {
+    func registerInputHandler(handler: InputClosure, forAddress address: Int) {
         inputHandlers[address] = handler
     }
     
-    func registerOutputHandler(handler: OutputClosure, forAddress address: UInt16) {
+    func registerOutputHandler(handler: OutputClosure, forAddress address: Int) {
         outputHandlers[address] = handler
     }
     
