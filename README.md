@@ -15,7 +15,7 @@ To use run the [Brainf*ck](https://en.wikipedia.org/wiki/Brainfuck) interpreter,
 
 1. Install [Logisim](http://www.cburch.com/logisim/download.html).
 1. Open assembler.swf. You'll need to have Flash Player installed on your system, or open it in Google Chrome.
-2. Paste in the contents of Assembly/BFOS.asm. Hit *Assemble*, it'll hang for several seconds.
+2. Paste in the contents of [Assembly/BFOS.asm](Assembly/BFOS.asm). Hit *Assemble*, it'll hang for several seconds.
 3. Copy the entirety of it output into your clipboard.
 4. Open cpu_2_bf.circ in Logisim.
 5. On the left side of Logisim, open the *main* circuit if it's not already opened.
