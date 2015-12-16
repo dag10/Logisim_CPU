@@ -69,7 +69,9 @@ do {
     let cpu = try CPU(ram: code, map: mapDict)
     
     try cpu.execute() { cpu in
+        #if DEBUG
         print(cpu) // Uncomment this to print debugging info for every CPU cycle.
+        #endif
         return
     }    
 } catch {
