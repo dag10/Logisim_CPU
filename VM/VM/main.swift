@@ -72,13 +72,13 @@ do {
     }, forAddress: 0x0FFF)
     
     cpu.registerOutputHandler({ word in
-        print(UnicodeScalar(word), terminator: "")
+        putchar(Int32(word))
     }, forAddress: 0x0FFF)
     
     try cpu.execute() { cpu in
         //print(cpu) // Uncomment this to print debugging info for every CPU cycle.
         return
-    }    
+    }
 } catch {
     print(error)
 }
