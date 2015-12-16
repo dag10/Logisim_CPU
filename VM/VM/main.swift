@@ -51,7 +51,6 @@ func parseMapFile(contents: String) throws -> [Int: String] {
     for (k, v) in try contents.componentsSeparatedByString("\n").map(parseMapLine) {
         mapDict[k] = v
     }
-    
     return mapDict
 }
 
@@ -67,6 +66,14 @@ do {
     }
     
     let cpu = try CPU(ram: code, map: mapDict)
+    
+    cpu.registerInputHandler({
+        return UInt16(getchar() & 0xFFFF)
+    }, forAddress: 0xFFFF)
+    
+    cpu.registerOutputHandler({ word in
+        print(UnicodeScalar(word), terminator: "")
+    }, forAddress: 0xFFFF)
     
     try cpu.execute() { cpu in
         //print(cpu) // Uncomment this to print debugging info for every CPU cycle.

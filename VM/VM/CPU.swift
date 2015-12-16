@@ -56,8 +56,13 @@ struct Instruction {
 }
 
 class CPU: CustomStringConvertible {
+    typealias InputClosure = () -> UInt16
+    typealias OutputClosure = UInt16 -> ()
+    
     var ram = ContiguousArray<UInt16>(count: Int(Properties.memorySize), repeatedValue: 0x0000)
     var map = [Int: String]()
+    private var inputHandlers = [Int: InputClosure]()
+    private var outputHandlers = [Int: OutputClosure]()
     
     var pc = 0 {
         willSet {
@@ -69,6 +74,14 @@ class CPU: CustomStringConvertible {
     
     var accumulator: UInt16 = 0
     var carryFlag: Bool = false
+    
+    func registerInputHandler(handler: InputClosure, forAddress address: UInt16) {
+        inputHandlers[address] = handler
+    }
+    
+    func registerOutputHandler(handler: OutputClosure, forAddress address: UInt16) {
+        outputHandlers[address] = handler
+    }
     
     func currentInstruction() throws -> Instruction {
         return Instruction(word: try wordAtAddress(pc))
@@ -156,8 +169,8 @@ class CPU: CustomStringConvertible {
             throw Error.AddressOutOfRange(address: address)
         }
         
-        if address == 0xFFF {
-            return UInt16(getchar() & 0xFFFF)
+        if let handler = inputHandlers[address] {
+            return handler()
         }
         
         return ram[address]
@@ -168,8 +181,8 @@ class CPU: CustomStringConvertible {
             throw Error.AddressOutOfRange(address: address)
         }
         
-        if address == 0xFFF {
-            print(UnicodeScalar(word), terminator: "")
+        if let handler = outputHandlers[address] {
+            handler(word)
             return
         }
         
