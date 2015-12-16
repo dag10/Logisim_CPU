@@ -16,7 +16,27 @@ cd VM/VM
 swift build --configuration release
 ```
 
-## <a name="running-programs"></a> Running Programs
+## Creating programs for the VM
+
+Open [assembler.swf](../assembler.swf), paste in the assembly, and click
+Assemble. If your program uses INC, DEC, PUSH, POP, CALL, or RET, you'll need
+to check off the corresponding checkboxes at the top. I know I know, the assembler
+is hilarious. I made it when I was 14.
+
+Your assembly targeting the VM will have to be a little bit different than
+assembly targeting the Logisim CPU.
+
+- The Logisim CPU's load point is 0x400, but the VM's load point is 0x000.
+
+- The Logisim CPU's Keyboard/Display device is mapped to 0xC02.
+  The VM's is mapped to 0xFFF (the highest memory address).
+
+Note: Due a bug in the assembler, the `.stack` directive does nothing. The
+      bottom (highest address) of the stack will seemingly always be 0x7FF.
+      Your program almost definitely won't be so long as to cause this to
+      interfere.
+
+## <a name="running-programs"></a> Running programs
 
 The program takes two arguments: code.txt, and map.txt (which is optional).
 
