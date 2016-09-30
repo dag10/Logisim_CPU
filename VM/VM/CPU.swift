@@ -13,28 +13,28 @@ private struct Properties {
     static let memorySize: UInt16 = memorySpace
 }
 
-enum Error: ErrorType {
-    case InvalidWord(word: String)
-    case AddressOutOfRange(address: Int)
+enum CPUError: Error {
+    case invalidWord(word: String)
+    case addressOutOfRange(address: Int)
 }
 
 enum OpCode: UInt8 {
-    case Add =           0x0
-    case AddCarry =      0x1
-    case Sub =           0x2
-    case SubCarry =      0x3
-    case And =           0x4
-    case Or =            0x5
-    case Xor =           0x6
-    case Not =           0x7
-    case LoadImmediate = 0x8
-    case LoadMemory =    0x9
-    case StoreMemory =   0xA
-    case Jump =          0xB
-    case JumpIndirect =  0xC
-    case JumpZero =      0xD
-    case JumpMinus =     0xE
-    case JumpCarry =     0xF
+    case add =           0x0
+    case addCarry =      0x1
+    case sub =           0x2
+    case subCarry =      0x3
+    case and =           0x4
+    case or =            0x5
+    case xor =           0x6
+    case not =           0x7
+    case loadImmediate = 0x8
+    case loadMemory =    0x9
+    case storeMemory =   0xA
+    case jump =          0xB
+    case jumpIndirect =  0xC
+    case jumpZero =      0xD
+    case jumpMinus =     0xE
+    case jumpCarry =     0xF
 }
 
 struct Instruction {
@@ -47,22 +47,22 @@ struct Instruction {
     }
     
     var isHalt: Bool {
-        return opcode == .Add && operand == 0x000
+        return opcode == .add && operand == 0x000
     }
     
     var referencesMemory: Bool {
-        return ![.LoadImmediate, .Not].contains(self.opcode)
+        return ![.loadImmediate, .not].contains(self.opcode)
     }
 }
 
 class CPU: CustomStringConvertible {
     typealias InputClosure = () -> UInt16
-    typealias OutputClosure = UInt16 -> ()
+    typealias OutputClosure = (UInt16) -> ()
     
-    var ram = ContiguousArray<UInt16>(count: Int(Properties.memorySize), repeatedValue: 0x0000)
+    var ram = ContiguousArray<UInt16>(repeating: 0x0000, count: Int(Properties.memorySize))
     var map = [Int: String]()
-    private var inputHandlers = [Int: InputClosure]()
-    private var outputHandlers = [Int: OutputClosure]()
+    fileprivate var inputHandlers = [Int: InputClosure]()
+    fileprivate var outputHandlers = [Int: OutputClosure]()
     
     var pc = 0 {
         willSet {
@@ -75,11 +75,11 @@ class CPU: CustomStringConvertible {
     var accumulator: UInt16 = 0
     var carryFlag: Bool = false
     
-    func registerInputHandler(handler: InputClosure, forAddress address: Int) {
+    func registerInputHandler(_ handler: @escaping InputClosure, forAddress address: Int) {
         inputHandlers[address] = handler
     }
     
-    func registerOutputHandler(handler: OutputClosure, forAddress address: Int) {
+    func registerOutputHandler(_ handler: @escaping OutputClosure, forAddress address: Int) {
         outputHandlers[address] = handler
     }
     
@@ -88,85 +88,85 @@ class CPU: CustomStringConvertible {
     }
     
     init(ram: [UInt16], map: [Int: String]? = nil) {
-        self.ram.replaceRange(ram.startIndex..<ram.endIndex, with: ram)
+        self.ram.replaceSubrange(ram.indices, with: ram)
         self.map = map ?? self.map
     }
     
     convenience init(ram: [String], map: [Int: String]? = nil) throws {
         self.init(ram: try ram.map({ (word: String) throws -> UInt16 in
             guard let data = word.uint16 else {
-                throw Error.InvalidWord(word: word)
+                throw CPUError.invalidWord(word: word)
             }
             return data
         }), map: map)
     }
     
     convenience init(ram: String, map: [Int: String]? = nil) throws {
-        try self.init(ram: ram.componentsSeparatedByString("\n"), map: map)
+        try self.init(ram: ram.components(separatedBy: "\n"), map: map)
     }
     
-    func execute(onExecute: ((CPU) -> ())? = nil) throws {
+    func execute(_ onExecute: ((CPU) -> ())? = nil) throws {
         while true {
             let instruction = try currentInstruction()
             if instruction.isHalt {
                 break
             }
             
-            pc = try executeInstruction(instruction)
+            pc = try execute(instruction: instruction)
             onExecute?(self)
         }
     }
     
-    func executeInstruction(instruction: Instruction) throws -> Int {
+    func execute(instruction: Instruction) throws -> Int {
         let readWord = { try self.wordAtAddress(Int(instruction.operand)) }
         
         switch instruction.opcode {
-        case .Add:
+        case .add:
             (accumulator, carryFlag) = UInt16.addWithOverflow(try readWord(), accumulator)
-        case .AddCarry:
+        case .addCarry:
             if carryFlag {
                 (accumulator, carryFlag) = UInt16.addWithOverflow(1, accumulator)
             }
             (accumulator, carryFlag) = UInt16.addWithOverflow(try readWord(), accumulator)
-        case .Sub:
+        case .sub:
             (accumulator, carryFlag) = UInt16.subtractWithOverflow(accumulator, try readWord())
-        case .SubCarry:
+        case .subCarry:
             if carryFlag {
                 (accumulator, carryFlag) = UInt16.subtractWithOverflow(accumulator, 1)
             }
             (accumulator, carryFlag) = UInt16.subtractWithOverflow(accumulator, try readWord())
-        case .And:
+        case .and:
             accumulator &= try readWord()
-        case .Or:
+        case .or:
             accumulator |= try readWord()
-        case .Xor:
+        case .xor:
             accumulator ^= try readWord()
-        case .Not:
+        case .not:
             accumulator = ~accumulator
-        case .LoadImmediate:
+        case .loadImmediate:
             accumulator = instruction.operand
-        case .LoadMemory:
+        case .loadMemory:
             accumulator = try readWord()
-        case .StoreMemory:
+        case .storeMemory:
             try writeWord(accumulator, toAddress: Int(instruction.operand))
-        case .Jump:
+        case .jump:
             return Int(instruction.operand)
-        case .JumpIndirect:
+        case .jumpIndirect:
             return Int(try readWord())
-        case .JumpZero:
+        case .jumpZero:
             return accumulator == 0x0000 ? Int(instruction.operand) : pc + 1
-        case .JumpMinus:
+        case .jumpMinus:
             return accumulator & 0x8000 != 0 ? Int(instruction.operand) : pc + 1
-        case .JumpCarry:
+        case .jumpCarry:
             return carryFlag ? Int(instruction.operand) : pc + 1
         }
         
         return pc + 1
     }
     
-    func wordAtAddress(address: Int) throws -> UInt16 {
+    func wordAtAddress(_ address: Int) throws -> UInt16 {
         guard address < Int(Properties.memorySpace) else {
-            throw Error.AddressOutOfRange(address: address)
+            throw CPUError.addressOutOfRange(address: address)
         }
         
         if let handler = inputHandlers[address] {
@@ -176,9 +176,9 @@ class CPU: CustomStringConvertible {
         return ram[address]
     }
     
-    func writeWord(word: UInt16, toAddress address: Int) throws {
+    func writeWord(_ word: UInt16, toAddress address: Int) throws {
         guard address < Int(Properties.memorySpace) else {
-            throw Error.AddressOutOfRange(address: address)
+            throw CPUError.addressOutOfRange(address: address)
         }
         
         if let handler = outputHandlers[address] {
@@ -220,7 +220,7 @@ class CPU: CustomStringConvertible {
         
         // Display the instruction at PC, displaying mapped labels if found
         if let instruction = try? currentInstruction() {
-            desc += String(instruction.opcode)
+            desc += String(describing: instruction.opcode)
             desc += " "
             
             if instruction.referencesMemory {
@@ -238,10 +238,10 @@ class CPU: CustomStringConvertible {
 
 extension String {
     var uint16: UInt16? {
-        let scanner = NSScanner(string: self)
+        let scanner = Scanner(string: self)
         
         var tmpData: UInt32 = 0
-        guard scanner.scanHexInt(&tmpData) else {
+        guard scanner.scanHexInt32(&tmpData) else {
             return nil
         }
         
